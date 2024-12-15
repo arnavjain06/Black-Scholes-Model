@@ -27,7 +27,7 @@ def put_price(S, d1, K, r, t, d2):
 st.title("Black-Scholes Model")
 
 #Sidebar for User Input
-st.sidebar.header("Black-Scholes Input")
+st.sidebar.header("Option Parameters")
 
 #Inputs 
 S = st.sidebar.number_input(
@@ -87,8 +87,40 @@ if r < 0:
 calculated_d1 = d1(S, K, r, t, vol)
 calculated_d2 = d2(calculated_d1, vol, t)
 
-#Price Predictions
-st.header("Output")
+# Custom CSS for option price display
+st.markdown("""
+<style>
+.call-price {
+    background-color: #90EE90;  /* Light green */
+    color: black;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+.put-price {
+    background-color: #FFB6C1;  /* Light red/pink */
+    color: black;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Columns for better layout
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(f'<div class="call-price">Call Option Price: ${call_price(S, calculated_d1, K, r, t, calculated_d2):.2f}</div>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f'<div class="put-price">Put Option Price: ${put_price(S, calculated_d1, K, r, t, calculated_d2):.2f}</div>', unsafe_allow_html=True)
+
+#metrics
 st.write(
     pd.DataFrame(
         {
