@@ -1,13 +1,17 @@
+import numpy as np
+import pandas as pd
+import plotly.graph_objs as go
+import streamlit as st
+import matplotlib.pyplot as plt 
+import seaborn as sns
+
 import math
 from scipy.stats import norm
-
-import pandas as pd
-import streamlit as st
 
 
 #BS calculation functions
 def d1 (S, K, r, t, vol):
-    d1 = ((math.log(S/K) + ((r + 0.5 * vol**2))) / (vol * math.sqrt(t)))
+    d1 = ((math.log(S/K) + (t * (r + 0.5 * vol**2))) / (vol * math.sqrt(t)))
     return d1
 
 def d2 (d1, vol, t):
@@ -33,7 +37,7 @@ st.sidebar.header("Option Parameters")
 S = st.sidebar.number_input(
     "Underlying Price (S)", 
     min_value=0.0, 
-    value=42.0,
+    value=100.0,
     step=0.01,
     format="%.2f",
 )
@@ -41,7 +45,7 @@ S = st.sidebar.number_input(
 K = st.sidebar.number_input(
     "Strike Price (K)", 
     min_value=0.0, 
-    value=40.0,
+    value=90.0,
     step=0.01,
     format="%.2f",
 )
@@ -50,7 +54,7 @@ r = st.sidebar.number_input(
     "Risk-Free Rate (%)", 
     min_value=0.0, 
     max_value=100.0, 
-    value=10.0,
+    value=5.0,
     step=0.01,
     format="%.2f",
 ) / 100
@@ -64,13 +68,22 @@ t = st.sidebar.number_input(
 )
 
 vol = st.sidebar.number_input(
-    "Volatility (%)", 
+    "Volatility σ (%)", 
     min_value=0.0, 
     max_value=100.0, 
     value=20.0,
     step=0.01,
     format="%.2f",
 ) / 100
+
+#Heatmap Sidebar Section
+st.sidebar.header("Heatmap Parameters")
+
+#Heatmap with a range of volatility values and Spot Price values
+min_vol = st.sidebar.slider("Min Volatility (HeatMap)", 0.01, 1.00, 0.1, 0.01)
+max_vol = st.sidebar.slider("Max Volatility (HeatMap)", 0.01, 1.00, 0.3, 0.01)
+min_spot = st.sidebar.slider("Min Spot Price (HeatMap)", 1.0, 100.0, 60.0, 1.0,)
+max_spot = st.sidebar.slider("Max Spot Price (HeatMap)", 1.0, 120.0, 100.0, 1.0)
 
 #Error/Exception handling
 if S < 0:
@@ -120,14 +133,74 @@ with col1:
 with col2:
     st.markdown(f'<div class="put-price">Put Option Price: ${put_price(S, calculated_d1, K, r, t, calculated_d2):.2f}</div>', unsafe_allow_html=True)
 
-#metrics
+
+st.header("Option Pricing Interactive Heatmap")
+st.write("Heatmap displaying fluctuation of option pricing with varying spot prices and volatility levels assuming a constant Strike Price")
+
+
+
+#numpy version compatibility issue
+np.Inf = np.inf
+
+spot_prices = np.linspace(min_spot, max_spot, 10)
+volatilities = np.linspace(min_vol, max_vol, 10)
+
+call_prices = np.zeros((10, 10))
+put_prices = np.zeros((10, 10))
+
+
+for i, S_ in enumerate(spot_prices):
+    for j, vol_ in enumerate(volatilities):
+        d1_ = d1(S_, K, r, t, vol_)
+        d2_ = d2(d1_, vol_, t)
+        call_prices[i, j] = call_price(S_, d1_, K, r, t, d2_)
+        put_prices[i, j] = put_price(S_, d1_, K, r, t, d2_)
+
+# Plot Call Option Heatmap
+st.subheader("Call Option Heatmap")
+fig_call, ax_call = plt.subplots(figsize=(8, 6))
+sns.heatmap(
+    call_prices, 
+    xticklabels=np.round(volatilities, 2), 
+    yticklabels=np.round(spot_prices, 2), 
+    cmap="YlGnBu", 
+    annot=True, 
+    fmt=".2f",
+    ax=ax_call
+)
+ax_call.set_xlabel("Volatility (σ)")
+ax_call.set_ylabel("Spot Price (S)")
+ax_call.set_title("Call Option Prices")
+st.pyplot(fig_call)
+
+# Plot Put Option Heatmap
+st.subheader("Put Option Heatmap")
+fig_put, ax_put = plt.subplots(figsize=(8, 6))
+sns.heatmap(
+    put_prices, 
+    xticklabels=np.round(volatilities, 2), 
+    yticklabels=np.round(spot_prices, 2), 
+    cmap="OrRd", 
+    annot=True, 
+    fmt=".2f",
+    ax=ax_put
+)
+ax_put.set_xlabel("Volatility (σ)")
+ax_put.set_ylabel("Spot Price (S)")
+ax_put.set_title("Put Option Prices")
+st.pyplot(fig_put)
+
+
+st.header("Input Parameters and Calculations")
 st.write(
     pd.DataFrame(
         {
-            "d1": [calculated_d1], 
-            "d2": [calculated_d2], 
-            "Call option price": [call_price(S, calculated_d1, K, r, t, calculated_d2)], 
-            "Put option price": [put_price(S, calculated_d1, K, r, t, calculated_d2)], 
+            "Parameter": ["Underlying Price (S)", "Strike Price (K)", "Risk-Free Rate (r)", "Time to Expiration (t)", "Volatility (σ)", "d1", "d2"],
+            "Value": [S, K, r, t, vol, calculated_d1, calculated_d2]
         }
     )
 )
+
+
+
+
