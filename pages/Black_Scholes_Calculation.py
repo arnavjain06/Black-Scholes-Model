@@ -35,7 +35,7 @@ st.sidebar.header("Option Parameters")
 
 #Inputs 
 S = st.sidebar.number_input(
-    "Underlying Price (S)", 
+    "Current Price (S)", 
     min_value=0.0, 
     value=100.0,
     step=0.01,
@@ -67,6 +67,7 @@ t = st.sidebar.number_input(
     format="%.2f",
 )
 
+#volatility in percent
 vol = st.sidebar.number_input(
     "Volatility σ (%)", 
     min_value=0.0, 
@@ -157,50 +158,49 @@ for i, S_ in enumerate(spot_prices):
         put_prices[i, j] = put_price(S_, d1_, K, r, t, d2_)
 
 # Plot Call Option Heatmap
-st.subheader("Call Option Heatmap")
-fig_call, ax_call = plt.subplots(figsize=(8, 6))
-sns.heatmap(
-    call_prices, 
-    xticklabels=np.round(volatilities, 2), 
-    yticklabels=np.round(spot_prices, 2), 
-    cmap="YlGnBu", 
-    annot=True, 
-    fmt=".2f",
-    ax=ax_call
-)
-ax_call.set_xlabel("Volatility (σ)")
-ax_call.set_ylabel("Spot Price (S)")
-ax_call.set_title("Call Option Prices")
-st.pyplot(fig_call)
+col1, col2 = st.columns(2)
 
-# Plot Put Option Heatmap
-st.subheader("Put Option Heatmap")
-fig_put, ax_put = plt.subplots(figsize=(8, 6))
-sns.heatmap(
-    put_prices, 
-    xticklabels=np.round(volatilities, 2), 
-    yticklabels=np.round(spot_prices, 2), 
-    cmap="OrRd", 
-    annot=True, 
-    fmt=".2f",
-    ax=ax_put
-)
-ax_put.set_xlabel("Volatility (σ)")
-ax_put.set_ylabel("Spot Price (S)")
-ax_put.set_title("Put Option Prices")
-st.pyplot(fig_put)
+with col1:
+    st.subheader("Call Option Heatmap")
+    fig_call, ax_call = plt.subplots(figsize=(8, 6))
+    sns.heatmap(
+        call_prices, 
+        xticklabels=np.round(volatilities, 2), 
+        yticklabels=np.round(spot_prices, 2), 
+        cmap="YlGnBu", 
+        annot=True, 
+        fmt=".2f",
+        ax=ax_call
+    )
+    ax_call.set_xlabel("Volatility (σ)")
+    ax_call.set_ylabel("Spot Price (S)")
+    ax_call.set_title("Call Option Prices")
+    st.pyplot(fig_call)
+
+with col2:
+    st.subheader("Put Option Heatmap")
+    fig_put, ax_put = plt.subplots(figsize=(8, 6))
+    sns.heatmap(
+        put_prices, 
+        xticklabels=np.round(volatilities, 2), 
+        yticklabels=np.round(spot_prices, 2), 
+        cmap="OrRd", 
+        annot=True, 
+        fmt=".2f",
+        ax=ax_put
+    )
+    ax_put.set_xlabel("Volatility (σ)")
+    ax_put.set_ylabel("Spot Price (S)")
+    ax_put.set_title("Put Option Prices")
+    st.pyplot(fig_put)
 
 
 st.header("Input Parameters and Calculations")
 st.write(
     pd.DataFrame(
         {
-            "Parameter": ["Underlying Price (S)", "Strike Price (K)", "Risk-Free Rate (r)", "Time to Expiration (t)", "Volatility (σ)", "d1", "d2"],
+            "Parameter": ["Current Price (S)", "Strike Price (K)", "Risk-Free Rate (r)", "Time to Expiration (t)", "Volatility (σ)", "d1", "d2"],
             "Value": [S, K, r, t, vol, calculated_d1, calculated_d2]
         }
     )
 )
-
-
-
-
